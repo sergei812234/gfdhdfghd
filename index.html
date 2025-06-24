@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GameCoins Market</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #ff7e5f, #feb47b); /* яркий градиент */
+      color: #1f2937;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+    }
+    input, select {
+      color: #111827;
+    }
+    /* Товар: плавное увеличение при наведении */
+    .product-item {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      background-color: #fff8f0;
+      border-radius: 0.75rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      user-select: none;
+    }
+    .product-item:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 24px rgba(255, 126, 95, 0.6);
+      cursor: pointer;
+    }
+    /* Кнопки */
+    button {
+      background-color: #ff6f61; /* насыщенный коралловый */
+      color: white;
+      font-weight: 700;
+      transition: background-color 0.3s ease;
+      border-radius: 0.5rem;
+      border: none;
+    }
+    button:hover {
+      background-color: #e0564b;
+    }
+    /* Блок оплаты и инструкция */
+    #paymentBlock, #afterPayment {
+      background-color: #fff3e0;
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      margin-top: 1rem;
+      color: #4a4a4a;
+      box-shadow: 0 2px 10px rgba(255, 111, 96, 0.3);
+    }
+    #orderCodeBlock {
+      font-family: monospace;
+      color: #d84315; /* насыщенный оранжево-красный */
+      font-weight: 700;
+      font-size: 1.5rem;
+      user-select: all;
+      cursor: pointer;
+      padding: 0.5rem;
+      background: #ffe6d6;
+      border-radius: 0.5rem;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      user-select: text;
+    }
+    #orderCodeBlock:active {
+      background-color: #f3b29c;
+    }
+    /* Номер карты — в одну строку */
+    #paymentBlock div {
+      white-space: nowrap;
+      font-family: monospace;
+      letter-spacing: 0.2em;
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 0.5rem 0 1rem 0;
+      color: #ff5722;
+    }
+    /* Кнопка очистки корзины */
+    #clearCartBtn {
+      background-color: #d32f2f;
+      margin-left: 0.5rem;
+      padding: 0.3rem 0.6rem;
+      font-weight: 600;
+    }
+    #clearCartBtn:hover {
+      background-color: #9a0007;
+    }
+    /* Секция корзины и кнопка очистки */
+    #cartControls {
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body class="p-6">
+  <div class="max-w-3xl mx-auto space-y-8">
+    <h1 class="text-4xl font-extrabold text-center mb-6" style="color:#bf360c;">🎮 GameCoins Market</h1>
+
+    <!-- Каталог -->
+    <section>
+      <h2 class="text-3xl font-semibold mb-4" style="color:#bf360c;">Каталог товаров</h2>
+      <div id="catalog" class="grid grid-cols-2 md:grid-cols-3 gap-6"></div>
+    </section>
+
+    <!-- Корзина -->
+    <section>
+      <h2 class="text-2xl font-semibold mb-1" style="color:#bf360c;">🛒 Корзина</h2>
+      <ul id="cart" class="space-y-2 min-h-[4rem]"></ul>
+      <div id="cartControls">
+        <p id="total" class="font-bold text-lg text-[#bf360c]">Итого: 0₽</p>
+        <button id="clearCartBtn" title="Очистить корзину">Очистить корзину</button>
+      </div>
+    </section>
+
+    <!-- Оформление заказа -->
+    <section>
+      <h2 class="text-2xl font-semibold mb-4" style="color:#bf360c;">Оформление заказа</h2>
+      <form id="orderForm" class="space-y-4 max-w-md mx-auto">
+        <input required type="text" placeholder="Ваше имя или username" class="w-full p-3 rounded border border-gray-300" id="name" pattern=".{3,}" />
+        <input required type="tel" placeholder="Номер телефона" class="w-full p-3 rounded border border-gray-300" id="phone" pattern="^(\+7|8)\d{10}$" />
+        <button type="submit" class="w-full py-3">Продолжить</button>
+      </form>
+    </section>
+
+    <!-- Блок оплаты -->
+    <section id="paymentBlock" class="hidden">
+      <p class="text-xl font-semibold mb-2" style="color:#d84315;">💳 Оплатите заказ</p>
+      <p>Переведите сумму на карту:</p>
+      <div>2202 2002 2020 2020</div>
+      <p class="text-sm" style="color:#6d4c41;">После оплаты отправьте скриншот в бота.</p>
+    </section>
+
+    <!-- Инструкция -->
+    <section id="afterPayment" class="hidden">
+      <p class="font-semibold mb-2" style="color:#d84315;">🤖 Отправьте номер заказа в бота и узнайте статус заказа</p>
+      <div id="orderCodeBlock" title="Нажмите, чтобы скопировать код заказа"></div>
+      <a href="https://t.me/your_bot_link" target="_blank" class="inline-block mt-3 px-6 py-3 bg-[#ff6f61] hover:bg-[#e0564b] rounded font-semibold text-white">Открыть бота</a>
+    </section>
+  </div>
+
+  <script>
+    const catalogItems = [
+      { id: 1, name: "100 UC (PUBG)", price: 99 },
+      { id: 2, name: "500 Diamonds (Free Fire)", price: 299 },
+      { id: 3, name: "V-Bucks 1000 (Fortnite)", price: 449 },
+      { id: 4, name: "1000 Gold (Clash of Clans)", price: 199 },
+      { id: 5, name: "Robux 800", price: 250 },
+      { id: 6, name: "Gems (Brawl Stars)", price: 150 },
+    ];
+
+    const cart = [];
+    const catalog = document.getElementById("catalog");
+    const cartList = document.getElementById("cart");
+    const totalDisplay = document.getElementById("total");
+    const paymentBlock = document.getElementById("paymentBlock");
+    const afterPayment = document.getElementById("afterPayment");
+    const orderCodeBlock = document.getElementById("orderCodeBlock");
+    const clearCartBtn = document.getElementById("clearCartBtn");
+
+    function updateCart() {
+      cartList.innerHTML = "";
+      let total = 0;
+      cart.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = `${item.name} — ${item.price}₽`;
+        cartList.appendChild(li);
+        total += item.price;
+      });
+      totalDisplay.textContent = `Итого: ${total}₽`;
+    }
+
+    // Генерация кода заказа: 5 заглавных букв + 1 цифра
+    function generateOrderCode() {
+      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      const digits = "0123456789";
+      let code = "";
+      for (let i = 0; i < 5; i++) {
+        code += letters.charAt(Math.floor(Math.random() * letters.length));
+      }
+      code += digits.charAt(Math.floor(Math.random() * digits.length));
+      return code;
+    }
+
+    catalogItems.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "product-item p-5 text-center";
+      div.innerHTML = `<h3 class="font-bold text-lg mb-2">${item.name}</h3><p class="text-xl font-semibold">${item.price}₽</p>`;
+      div.onclick = () => {
+        cart.push(item);
+        updateCart();
+      };
+      catalog.appendChild(div);
+    });
+
+    clearCartBtn.addEventListener("click", () => {
+      cart.length = 0; // очистить массив
+      updateCart();
+      paymentBlock.classList.add("hidden");
+      afterPayment.classList.add("hidden");
+      orderCodeBlock.textContent = "";
+    });
+
+    orderCodeBlock.addEventListener("click", async () => {
+      const code = orderCodeBlock.textContent.replace("Ваш номер заказа: ", "").trim();
+      if (!code) return;
+      try {
+        await navigator.clipboard.writeText(code);
+        alert("Код заказа скопирован в буфер обмена!");
+      } catch {
+        alert("Не удалось скопировать код. Попробуйте выделить и скопировать вручную.");
+      }
+    });
+
+    document.getElementById("orderForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+
+      const phoneRegex = /^(\+7|8)\d{10}$/;
+      if (!phoneRegex.test(phone)) {
+        alert("Введите корректный номер телефона (например: +79991234567)");
+        return;
+      }
+
+      if (name.length < 3) {
+        alert("Введите настоящее имя или username");
+        return;
+      }
+
+      if (cart.length === 0) {
+        alert("Корзина пуста. Добавьте товары, чтобы оформить заказ.");
+        return;
+      }
+
+      // Показываем блок оплаты и инструкцию
+      paymentBlock.classList.remove("hidden");
+      afterPayment.classList.remove("hidden");
+
+      // Генерируем и показываем код заказа
+      const code = generateOrderCode();
+      orderCodeBlock.textContent = `Ваш номер заказа: ${code}`;
+    });
+
+    // Инициализация
+    updateCart();
+  </script>
+</body>
+</html>
